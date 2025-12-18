@@ -1,84 +1,18 @@
-/* ========= BTX DOCS SAÚDE 1.0 (PWA) =========
-   - Login por código: BTX/0007
-   - Um PDF por vez (documento atual)
-   - Layout clínico oficial (BTX)
-   - Receita: guiada + livre
-   - Ficha clínica completa
-================================================ */
-
 const ACCESS_CODE = "BTX/0007";
-const LS_OK = "btx_ok_v1";
-const LS_ACTIVE_DOC = "btx_active_doc_v1";
+const LS_OK = "btx_ok_v2";
+const LS_ACTIVE_DOC = "btx_active_doc_v2";
 
 const $ = (q) => document.querySelector(q);
 
-const state = {
-  active: "receita",
-};
+const state = { active: "receita" };
 
-boot();
-
-function boot(){
-  // bind login
-  $("#btnEntrar").addEventListener("click", onLogin);
-  $("#codigo").addEventListener("keydown", (e)=>{ if(e.key==="Enter") onLogin(); });
-
-  // bind menu
-  document.querySelectorAll(".menu-btn").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const doc = btn.getAttribute("data-doc");
-      setActiveDoc(doc);
-    });
-  });
-
-  // sair
-  $("#btnSair").addEventListener("click", ()=>{
-    localStorage.removeItem(LS_OK);
-    location.reload();
-  });
-
-  // pdf
-  $("#btnGerarPdf").addEventListener("click", gerarPDF);
-
-  // restore login state
-  if(localStorage.getItem(LS_OK)==="1"){
-    showApp();
-  } else {
-    showLogin();
-  }
-
-  // restore active doc
-  const saved = localStorage.getItem(LS_ACTIVE_DOC);
-  if(saved) state.active = saved;
-
-  render();
-}
-
-function showLogin(){
-  $("#login").classList.remove("hidden");
-  $("#app").classList.add("hidden");
-}
-
-function showApp(){
-  $("#login").classList.add("hidden");
-  $("#app").classList.remove("hidden");
-}
-
-function onLogin(){
-  const code = ($("#codigo").value || "").trim();
-  if(code !== ACCESS_CODE){
-    alert("Código inválido.");
-    return;
-  }
-  localStorage.setItem(LS_OK, "1");
-  showApp();
-  render();
-}
-
-function setActiveDoc(doc){
-  state.active = doc;
-  localStorage.setItem(LS_ACTIVE_DOC, doc);
-  render();
+// ---- UTIL ----
+function normCode(s){
+  // remove espaços e normaliza
+  return String(s || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
 }
 
 function todayBR(){
@@ -89,14 +23,35 @@ function todayBR(){
   return `${dd}/${mm}/${yy}`;
 }
 
-function esc(s){
-  return String(s ?? "").replace(/[&<>"']/g, (m)=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[m]));
+function showLogin(){
+  $("#login").classList.remove("hidden");
+  $("#app").classList.add("hidden");
+}
+function showApp(){
+  $("#login").classList.add("hidden");
+  $("#app").classList.remove("hidden");
 }
 
-/* --------- Templates --------- */
+// ---- LOGIN (funções globais para o onclick) ----
+window.BTX_login = function(){
+  const code = normCode($("#codigo").value);
+  if(code !== normCode(ACCESS_CODE)){
+    alert("Código inválido. Use BTX/0007");
+    return;
+  }
+  localStorage.setItem(LS_OK, "1");
+  showApp();
+  render();
+};
 
+window.BTX_sair = function(){
+  localStorage.removeItem(LS_OK);
+  // opcional: limpar doc ativo
+  // localStorage.removeItem(LS_ACTIVE_DOC);
+  location.reload();
+};
+
+// ---- DOCS ----
 function shell({title, metaRight, bodyHtml}){
   return `
     <div class="doc-header">
@@ -107,13 +62,11 @@ function shell({title, metaRight, bodyHtml}){
         </div>
       </div>
       <div class="doc-title">
-        <h2>${esc(title)}</h2>
-        <div class="meta">${esc(metaRight)}</div>
+        <h2>${title}</h2>
+        <div class="meta">${metaRight}</div>
       </div>
     </div>
-    <div class="doc-body">
-      ${bodyHtml}
-    </div>
+    <div class="doc-body">${bodyHtml}</div>
     <div class="doc-footer">
       <div class="sig">
         <div class="line"></div>
@@ -143,18 +96,16 @@ function docReceita(){
     <div class="field">
       <span class="k">Prescrição (atalhos)</span>
       <div class="presc-bar">
-        <button class="pill" type="button" data-med="Dipirona 500 mg — 1 comprimido VO a cada 6/6h se dor/ febre.">Dipirona</button>
-        <button class="pill" type="button" data-med="Paracetamol 750 mg — 1 comprimido VO a cada 8/8h se dor/ febre.">Paracetamol</button>
-        <button class="pill" type="button" data-med="Ibuprofeno 600 mg — 1 comprimido VO a cada 8/8h por 3 dias, após refeição.">Ibuprofeno</button>
-        <button class="pill" type="button" data-med="Nimesulida 100 mg — 1 comprimido VO a cada 12/12h por 3 dias, após refeição.">Nimesulida</button>
-        <button class="pill" type="button" data-med="Amoxicilina 500 mg — 1 cápsula VO a cada 8/8h por 7 dias.">Amoxicilina</button>
-        <button class="pill" type="button" data-med="Amoxicilina + Clavulanato 875/125 mg — 1 comprimido VO a cada 12/12h por 7 dias.">Amox+Clav</button>
+        <button class="pill" type="button" data-med="Dipirona 500 mg — 1 cp VO 6/6h se dor/febre.">Dipirona</button>
+        <button class="pill" type="button" data-med="Paracetamol 750 mg — 1 cp VO 8/8h se dor/febre.">Paracetamol</button>
+        <button class="pill" type="button" data-med="Ibuprofeno 600 mg — 1 cp VO 8/8h por 3 dias, após refeição.">Ibuprofeno</button>
+        <button class="pill" type="button" data-med="Amoxicilina 500 mg — 1 cápsula VO 8/8h por 7 dias.">Amoxicilina</button>
       </div>
     </div>
 
     <div class="field">
       <span class="k">Prescrição (campo livre)</span>
-      <textarea class="v" id="rx_texto" placeholder="Escreva a prescrição completa aqui. Você também pode clicar nos atalhos acima."></textarea>
+      <textarea class="v" id="rx_texto" placeholder="Escreva aqui ou use os atalhos."></textarea>
     </div>
 
     <div class="field">
@@ -168,30 +119,11 @@ function docReceita(){
 function docLaudo(){
   const body = `
     <div class="grid">
-      <div class="field">
-        <span class="k">Paciente</span>
-        <input class="v" id="ld_paciente" placeholder="Nome completo" />
-      </div>
-      <div class="field">
-        <span class="k">Identificação</span>
-        <input class="v" id="ld_id" placeholder="CPF/Prontuário (opcional)" />
-      </div>
+      <div class="field"><span class="k">Paciente</span><input class="v" id="ld_paciente" /></div>
+      <div class="field"><span class="k">Identificação</span><input class="v" id="ld_id" /></div>
     </div>
-
-    <div class="field">
-      <span class="k">Solicitante / Encaminhamento</span>
-      <input class="v" id="ld_solic" placeholder="Opcional" />
-    </div>
-
-    <div class="field">
-      <span class="k">Descrição / Achados</span>
-      <textarea class="v" id="ld_texto" placeholder="Descreva o laudo de forma objetiva e completa."></textarea>
-    </div>
-
-    <div class="field">
-      <span class="k">Conclusão</span>
-      <textarea class="v" id="ld_conc" placeholder="Conclusão do laudo."></textarea>
-    </div>
+    <div class="field"><span class="k">Descrição / Achados</span><textarea class="v" id="ld_texto"></textarea></div>
+    <div class="field"><span class="k">Conclusão</span><textarea class="v" id="ld_conc"></textarea></div>
   `;
   return shell({title:"Laudo", metaRight:"Documento clínico", bodyHtml: body});
 }
@@ -199,30 +131,13 @@ function docLaudo(){
 function docAtestado(){
   const body = `
     <div class="grid">
-      <div class="field">
-        <span class="k">Paciente</span>
-        <input class="v" id="at_paciente" placeholder="Nome completo" />
-      </div>
-      <div class="field">
-        <span class="k">CID (opcional)</span>
-        <input class="v" id="at_cid" placeholder="Ex.: J06.9" />
-      </div>
+      <div class="field"><span class="k">Paciente</span><input class="v" id="at_paciente" /></div>
+      <div class="field"><span class="k">CID (opcional)</span><input class="v" id="at_cid" /></div>
     </div>
-
-    <div class="field">
-      <span class="k">Texto do atestado</span>
-      <textarea class="v" id="at_texto" placeholder="Atesto para os devidos fins que..."></textarea>
-    </div>
-
+    <div class="field"><span class="k">Texto do atestado</span><textarea class="v" id="at_texto"></textarea></div>
     <div class="grid">
-      <div class="field">
-        <span class="k">Período (dias)</span>
-        <input class="v" id="at_dias" inputmode="numeric" placeholder="Ex.: 2" />
-      </div>
-      <div class="field">
-        <span class="k">Data de início (opcional)</span>
-        <input class="v" id="at_ini" placeholder="Ex.: ${todayBR()}" />
-      </div>
+      <div class="field"><span class="k">Período (dias)</span><input class="v" id="at_dias" inputmode="numeric" /></div>
+      <div class="field"><span class="k">Data de início (opcional)</span><input class="v" id="at_ini" placeholder="${todayBR()}" /></div>
     </div>
   `;
   return shell({title:"Atestado", metaRight:"Uso profissional", bodyHtml: body});
@@ -231,25 +146,11 @@ function docAtestado(){
 function docRecibo(){
   const body = `
     <div class="grid">
-      <div class="field">
-        <span class="k">Recebido de</span>
-        <input class="v" id="rc_de" placeholder="Nome do paciente/cliente" />
-      </div>
-      <div class="field">
-        <span class="k">Valor (R$)</span>
-        <input class="v" id="rc_valor" inputmode="decimal" placeholder="Ex.: 150,00" />
-      </div>
+      <div class="field"><span class="k">Recebido de</span><input class="v" id="rc_de" /></div>
+      <div class="field"><span class="k">Valor (R$)</span><input class="v" id="rc_valor" inputmode="decimal" /></div>
     </div>
-
-    <div class="field">
-      <span class="k">Referente a</span>
-      <input class="v" id="rc_ref" placeholder="Ex.: Consulta / Procedimento / Avaliação" />
-    </div>
-
-    <div class="field">
-      <span class="k">Observações</span>
-      <textarea class="v" id="rc_obs" placeholder="Detalhes adicionais (opcional)."></textarea>
-    </div>
+    <div class="field"><span class="k">Referente a</span><input class="v" id="rc_ref" /></div>
+    <div class="field"><span class="k">Observações</span><textarea class="v" id="rc_obs"></textarea></div>
   `;
   return shell({title:"Recibo", metaRight:"Comprovante", bodyHtml: body});
 }
@@ -257,99 +158,45 @@ function docRecibo(){
 function docFicha(){
   const body = `
     <div class="grid">
-      <div class="field">
-        <span class="k">Nome completo</span>
-        <input class="v" id="fc_nome" placeholder="Paciente" />
-      </div>
-      <div class="field">
-        <span class="k">Data de nascimento</span>
-        <input class="v" id="fc_nasc" placeholder="dd/mm/aaaa" />
-      </div>
-
-      <div class="field">
-        <span class="k">CPF (opcional)</span>
-        <input class="v" id="fc_cpf" placeholder="Somente números" />
-      </div>
-      <div class="field">
-        <span class="k">Telefone</span>
-        <input class="v" id="fc_tel" placeholder="(xx) xxxxx-xxxx" />
-      </div>
-
-      <div class="field">
-        <span class="k">Endereço</span>
-        <input class="v" id="fc_end" placeholder="Rua, número, bairro, cidade" />
-      </div>
-      <div class="field">
-        <span class="k">Responsável (se aplicável)</span>
-        <input class="v" id="fc_resp" placeholder="Nome / contato" />
-      </div>
+      <div class="field"><span class="k">Nome completo</span><input class="v" id="fc_nome" /></div>
+      <div class="field"><span class="k">Data de nascimento</span><input class="v" id="fc_nasc" placeholder="dd/mm/aaaa" /></div>
+      <div class="field"><span class="k">CPF (opcional)</span><input class="v" id="fc_cpf" /></div>
+      <div class="field"><span class="k">Telefone</span><input class="v" id="fc_tel" /></div>
+      <div class="field"><span class="k">Endereço</span><input class="v" id="fc_end" /></div>
+      <div class="field"><span class="k">Responsável (se aplicável)</span><input class="v" id="fc_resp" /></div>
     </div>
 
-    <div class="field">
-      <span class="k">Queixa principal</span>
-      <textarea class="v" id="fc_qp" placeholder="Relato principal do paciente."></textarea>
-    </div>
+    <div class="field"><span class="k">Queixa principal</span><textarea class="v" id="fc_qp"></textarea></div>
+    <div class="field"><span class="k">História da doença atual</span><textarea class="v" id="fc_hda"></textarea></div>
 
-    <div class="field">
-      <span class="k">História da doença atual</span>
-      <textarea class="v" id="fc_hda" placeholder="Início, evolução, fatores, sintomas associados."></textarea>
+    <div class="grid">
+      <div class="field"><span class="k">Antecedentes pessoais</span><textarea class="v" id="fc_ap"></textarea></div>
+      <div class="field"><span class="k">Medicações em uso</span><textarea class="v" id="fc_med"></textarea></div>
     </div>
 
     <div class="grid">
-      <div class="field">
-        <span class="k">Antecedentes pessoais</span>
-        <textarea class="v" id="fc_ap" placeholder="Comorbidades, cirurgias, alergias."></textarea>
-      </div>
-      <div class="field">
-        <span class="k">Medicações em uso</span>
-        <textarea class="v" id="fc_med" placeholder="Nome, dose, frequência."></textarea>
-      </div>
+      <div class="field"><span class="k">Hábitos</span><textarea class="v" id="fc_hab"></textarea></div>
+      <div class="field"><span class="k">História familiar</span><textarea class="v" id="fc_hf"></textarea></div>
     </div>
+
+    <div class="field"><span class="k">Exame físico / Sinais vitais</span><textarea class="v" id="fc_ef"></textarea></div>
 
     <div class="grid">
-      <div class="field">
-        <span class="k">Hábitos</span>
-        <textarea class="v" id="fc_hab" placeholder="Tabagismo, etilismo, atividade física, etc."></textarea>
-      </div>
-      <div class="field">
-        <span class="k">História familiar</span>
-        <textarea class="v" id="fc_hf" placeholder="Doenças na família, risco cardiovascular, etc."></textarea>
-      </div>
+      <div class="field"><span class="k">Hipóteses diagnósticas</span><textarea class="v" id="fc_hd"></textarea></div>
+      <div class="field"><span class="k">Conduta / Plano</span><textarea class="v" id="fc_plan"></textarea></div>
     </div>
 
-    <div class="field">
-      <span class="k">Exame físico / Sinais vitais</span>
-      <textarea class="v" id="fc_ef" placeholder="PA, FC, FR, SatO2, temperatura, geral e segmentar."></textarea>
-    </div>
-
-    <div class="grid">
-      <div class="field">
-        <span class="k">Hipóteses diagnósticas</span>
-        <textarea class="v" id="fc_hd" placeholder="Hipóteses e justificativa."></textarea>
-      </div>
-      <div class="field">
-        <span class="k">Conduta / Plano</span>
-        <textarea class="v" id="fc_plan" placeholder="Solicitações, condutas, medicações, retorno."></textarea>
-      </div>
-    </div>
-
-    <div class="field">
-      <span class="k">Observações finais</span>
-      <textarea class="v" id="fc_obs" placeholder="Qualquer observação relevante."></textarea>
-    </div>
+    <div class="field"><span class="k">Observações finais</span><textarea class="v" id="fc_obs"></textarea></div>
   `;
   return shell({title:"Ficha Clínica", metaRight:"Registro clínico", bodyHtml: body});
 }
-
-/* --------- Render / Actions --------- */
 
 function render(){
   const root = $("#pdfRoot");
   if(!root) return;
 
-  const doc = state.active;
   let html = "";
-  switch(doc){
+  switch(state.active){
     case "receita": html = docReceita(); break;
     case "laudo": html = docLaudo(); break;
     case "atestado": html = docAtestado(); break;
@@ -359,41 +206,125 @@ function render(){
   }
   root.innerHTML = html;
 
-  // bind prescription pills
-  if(doc==="receita"){
+  // bind menu clicks
+  document.querySelectorAll(".menu-btn").forEach(btn=>{
+    btn.onclick = () => {
+      state.active = btn.getAttribute("data-doc");
+      localStorage.setItem(LS_ACTIVE_DOC, state.active);
+      render();
+    };
+  });
+
+  // bind pills
+  if(state.active === "receita"){
     root.querySelectorAll(".pill").forEach(p=>{
-      p.addEventListener("click", ()=>{
-        const t = p.getAttribute("data-med");
+      p.onclick = () => {
+        const t = p.getAttribute("data-med") || "";
         const ta = $("#rx_texto");
         ta.value = (ta.value ? ta.value.trimEnd()+"\n" : "") + t;
-      });
+      };
     });
   }
 }
 
 function fileNameForDoc(){
-  const map = {
+  return ({
     receita: "BTX-Receita.pdf",
     laudo: "BTX-Laudo.pdf",
     atestado: "BTX-Atestado.pdf",
     recibo: "BTX-Recibo.pdf",
     ficha: "BTX-Ficha-Clinica.pdf",
-  };
-  return map[state.active] || "BTX-Documento.pdf";
+  })[state.active] || "BTX-Documento.pdf";
 }
 
-function gerarPDF(){
-  const el = $("#pdfRoot");
-  if(!el) return;
+/* ========= CORREÇÃO DO PDF =========
+   html2pdf/html2canvas não “enxerga” texto digitado em input/textarea.
+   Solução: clonar o documento e substituir inputs/textarea por DIVs com o valor.
+*/
+function buildSnapshotForPdf(original){
+  const clone = original.cloneNode(true);
+
+  // inputs
+  const inputsOrig = original.querySelectorAll("input");
+  const inputsClone = clone.querySelectorAll("input");
+  inputsOrig.forEach((inp, i)=>{
+    const val = inp.value || "";
+    const rep = document.createElement("div");
+    rep.style.padding = "10px";
+    rep.style.border = "1px solid rgba(0,0,0,.14)";
+    rep.style.borderRadius = "14px";
+    rep.style.minHeight = "20px";
+    rep.textContent = val;
+    inputsClone[i].replaceWith(rep);
+  });
+
+  // textareas
+  const taOrig = original.querySelectorAll("textarea");
+  const taClone = clone.querySelectorAll("textarea");
+  taOrig.forEach((ta, i)=>{
+    const val = ta.value || "";
+    const rep = document.createElement("div");
+    rep.style.padding = "10px";
+    rep.style.border = "1px solid rgba(0,0,0,.14)";
+    rep.style.borderRadius = "14px";
+    rep.style.minHeight = "80px";
+    rep.style.whiteSpace = "pre-wrap";
+    rep.textContent = val;
+    taClone[i].replaceWith(rep);
+  });
+
+  // botões dos atalhos (não precisa aparecer no PDF)
+  clone.querySelectorAll(".presc-bar, .pill").forEach(el=>el.remove());
+
+  return clone;
+}
+
+window.BTX_gerarPDF = function(){
+  if(typeof html2pdf === "undefined"){
+    alert("Biblioteca do PDF não carregou. Se estiver offline na 1ª vez, abra com internet 1 vez ou use a versão com html2pdf local.");
+    return;
+  }
+
+  const original = $("#pdfRoot");
+  const snapshot = buildSnapshotForPdf(original);
+
+  // coloca o snapshot fora da tela só pra renderizar
+  snapshot.style.position = "fixed";
+  snapshot.style.left = "-99999px";
+  snapshot.style.top = "0";
+  snapshot.style.width = original.offsetWidth + "px";
+  document.body.appendChild(snapshot);
 
   const opt = {
     margin: [12, 12, 12, 12],
     filename: fileNameForDoc(),
     image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+    html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
   };
 
-  // Gera 1 PDF por vez: o documento atual
-  html2pdf().set(opt).from(el).save();
-}
+  html2pdf().set(opt).from(snapshot).save().then(()=>{
+    snapshot.remove();
+  }).catch(()=>{
+    snapshot.remove();
+    alert("Falha ao gerar PDF. Tente novamente.");
+  });
+};
+
+// ---- INIT ----
+(function init(){
+  // login state
+  if(localStorage.getItem(LS_OK) === "1") showApp(); else showLogin();
+
+  // doc state
+  state.active = localStorage.getItem(LS_ACTIVE_DOC) || "receita";
+
+  // enter key no login
+  const codeInput = $("#codigo");
+  if(codeInput){
+    codeInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter") window.BTX_login(); });
+  }
+
+  // render
+  render();
+})();
