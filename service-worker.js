@@ -1,4 +1,4 @@
-const CACHE = "btx-docs-v1";
+const CACHE = "btx-docs-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,13 +8,16 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e)=>{
-  e.waitUntil(
-    caches.open(CACHE).then(c=>c.addAll(ASSETS))
-  );
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
 });
 
 self.addEventListener("activate", (e)=>{
-  e.waitUntil(self.clients.claim());
+  e.waitUntil((async ()=>{
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => (k !== CACHE) ? caches.delete(k) : Promise.resolve()));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", (e)=>{
