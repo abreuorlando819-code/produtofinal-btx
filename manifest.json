@@ -1,0 +1,10 @@
+{
+  "name": "BTX Docs Saúde",
+  "short_name": "BTX Docs",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#4aa3ff",
+  "description": "Gerador offline de documentos clínicos (BTX).",
+  "icons": []
+}
