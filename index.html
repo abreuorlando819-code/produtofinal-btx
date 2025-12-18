@@ -21,11 +21,10 @@
     <label class="label">Código de acesso</label>
     <input id="codigo" class="input" inputmode="text" autocomplete="one-time-code" placeholder="BTX/0007" />
 
-    <button class="btn primary" id="btnEntrar">Entrar</button>
+    <!-- fallback inline (não depende de listener) -->
+    <button class="btn primary" id="btnEntrar" onclick="BTX_login()">Entrar</button>
 
-    <p class="hint">
-      Acesso local. Após validar uma vez, funciona offline.
-    </p>
+    <p class="hint">Após validar uma vez, funciona offline.</p>
   </div>
 </section>
 
@@ -36,7 +35,7 @@
       <div class="topbar-mark">BTX</div>
       <div class="topbar-title">Docs Saúde</div>
     </div>
-    <button class="btn ghost" id="btnSair" title="Sair">Sair</button>
+    <button class="btn ghost" id="btnSair" onclick="BTX_sair()" title="Sair">Sair</button>
   </header>
 
   <main class="layout">
@@ -49,20 +48,17 @@
 
       <div class="divider"></div>
 
-      <button class="btn secondary" id="btnGerarPdf">Gerar PDF</button>
+      <button class="btn secondary" id="btnGerarPdf" onclick="BTX_gerarPDF()">Gerar PDF</button>
       <div class="small-note">Um PDF por vez (documento atual).</div>
     </aside>
 
     <section class="content">
-      <!-- Área que vira PDF -->
-      <div id="pdfRoot" class="doc-shell">
-        <!-- injetado via JS -->
-      </div>
+      <div id="pdfRoot" class="doc-shell"></div>
     </section>
   </main>
 </section>
 
-<!-- PDF engine -->
+<!-- PDF engine (atenção: se estiver offline na 1ª vez, essa lib não carrega; veja nota abaixo) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="app.js"></script>
 </body>
