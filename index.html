@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BTX Docs Saúde</title>
+  <meta name="theme-color" content="#4aa3ff" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login" class="screen">
+  <div class="card login-card">
+    <div class="brand">
+      <div class="brand-mark">BTX</div>
+      <div class="brand-sub">Docs Saúde</div>
+    </div>
+
+    <label class="label">Código de acesso</label>
+    <input id="codigo" class="input" inputmode="text" autocomplete="one-time-code" placeholder="BTX/0007" />
+
+    <button class="btn primary" id="btnEntrar">Entrar</button>
+
+    <p class="hint">
+      Acesso local. Após validar uma vez, funciona offline.
+    </p>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="app" class="screen hidden">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-mark">BTX</div>
+      <div class="topbar-title">Docs Saúde</div>
+    </div>
+    <button class="btn ghost" id="btnSair" title="Sair">Sair</button>
+  </header>
+
+  <main class="layout">
+    <aside class="menu">
+      <button class="btn menu-btn" data-doc="receita">Receita</button>
+      <button class="btn menu-btn" data-doc="laudo">Laudo</button>
+      <button class="btn menu-btn" data-doc="atestado">Atestado</button>
+      <button class="btn menu-btn" data-doc="recibo">Recibo</button>
+      <button class="btn menu-btn" data-doc="ficha">Ficha Clínica</button>
+
+      <div class="divider"></div>
+
+      <button class="btn secondary" id="btnGerarPdf">Gerar PDF</button>
+      <div class="small-note">Um PDF por vez (documento atual).</div>
+    </aside>
+
+    <section class="content">
+      <!-- Área que vira PDF -->
+      <div id="pdfRoot" class="doc-shell">
+        <!-- injetado via JS -->
+      </div>
+    </section>
+  </main>
+</section>
+
+<!-- PDF engine -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
